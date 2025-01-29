@@ -142,5 +142,3 @@ export default function SIPCalculator() {
     </div>
   );
 }
-
-// Add this CSS in the same file
