@@ -23,7 +23,9 @@ import type { ColumnsType } from "antd/es/table";
 
 interface YearlyBreakdownItem {
   year: number;
+  actualYear: number;
   investment: number;
+  totalInvested: number;
   interest: number;
   balance: number;
 }
@@ -37,12 +39,16 @@ export default function SIPCalculator() {
   const { monthlyInvestment, expectedReturn, timePeriod, calculation, isCalculating, yearlyBreakdown, error } = useSelector(selectSIPState);
 
   const calculateYearlyBreakdown = (monthlyAmount: number, returnRate: number, years: number) => {
-    const breakdown = [];
+    const breakdown: YearlyBreakdownItem[] = [];
     const monthlyRate = returnRate / (12 * 100);
     let runningBalance = 0;
+    const startYear = new Date().getFullYear();
+    let totalInvestedSoFar = 0;
+    let previousYearBalance = 0;
 
     for (let year = 1; year <= years; year++) {
       const yearlyInvestment = monthlyAmount * 12;
+      totalInvestedSoFar += yearlyInvestment;
       let yearEndBalance = 0;
 
       // Calculate month-by-month for accurate compounding
@@ -51,15 +57,19 @@ export default function SIPCalculator() {
         runningBalance = yearEndBalance;
       }
 
-      const interest = yearEndBalance - runningBalance + yearlyInvestment;
+      // Calculate returns as the difference between current balance and (previous balance + current year investment)
+      const interest = yearEndBalance - previousYearBalance - yearlyInvestment;
 
       breakdown.push({
         year,
+        actualYear: startYear + year - 1,
         investment: Math.round(yearlyInvestment),
+        totalInvested: Math.round(totalInvestedSoFar),
         interest: Math.round(interest),
         balance: Math.round(yearEndBalance),
       });
 
+      previousYearBalance = yearEndBalance;
       runningBalance = yearEndBalance;
     }
 
@@ -124,19 +134,28 @@ export default function SIPCalculator() {
   const columns: ColumnsType<DataType> = [
     {
       title: "Year",
-      dataIndex: "year",
-      key: "year",
+      dataIndex: "actualYear",
+      key: "actualYear",
       align: "center",
+      render: (value: number) => value,
+      fixed: "left",
     },
     {
-      title: "Investment",
+      title: "Investment Amount",
       dataIndex: "investment",
       key: "investment",
       align: "right",
       render: (value: number) => `₹${value.toLocaleString()}`,
     },
     {
-      title: "Interest",
+      title: "Total Invested",
+      dataIndex: "totalInvested",
+      key: "totalInvested",
+      align: "right",
+      render: (value: number) => `₹${value.toLocaleString()}`,
+    },
+    {
+      title: "Returns",
       dataIndex: "interest",
       key: "interest",
       align: "right",
