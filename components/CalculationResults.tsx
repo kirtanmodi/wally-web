@@ -1,47 +1,49 @@
-interface SIPCalculation {
-  totalInvestment: number;
-  totalReturns: number;
-  maturityValue: number;
-  annualizedReturn: number;
+interface CalculationResultItem {
+  label: string;
+  value: number;
+  color: string;
+  isPercentage?: boolean;
 }
 
 interface CalculationResultsProps {
-  calculation: SIPCalculation;
+  results: CalculationResultItem[];
 }
 
-export function CalculationResults({ calculation }: CalculationResultsProps) {
-  const results = [
-    {
-      label: "Total Investment",
-      value: calculation.totalInvestment,
-      color: "text-gray-900",
-    },
-    {
-      label: "Total Returns",
-      value: calculation.totalReturns,
-      color: "text-green-600",
-    },
-    {
-      label: "Maturity Value",
-      value: calculation.maturityValue,
-      color: "text-blue-600",
-    },
-    {
-      label: "Annual Return",
-      value: calculation.annualizedReturn,
-      color: "text-purple-600",
-      isPercentage: true,
-    },
-  ];
-
+export function CalculationResults({ results }: CalculationResultsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {results.map((result) => (
-        <div key={result.label} className="bg-gray-50 p-4 rounded-md">
-          <p className="text-sm text-gray-600">{result.label}</p>
-          <p className={`text-lg font-semibold ${result.color}`}>{result.isPercentage ? `${result.value}%` : `₹${result.value.toLocaleString()}`}</p>
-        </div>
-      ))}
+      {results.map((result) => {
+        // Handle undefined or null values
+        if (!result || typeof result.value === "undefined") {
+          return (
+            <div key={`error-${Math.random()}`} className="bg-red-50 p-4 rounded-md">
+              <p className="text-sm text-red-600">Error: Invalid data</p>
+            </div>
+          );
+        }
+
+        // Format the value with proper number handling
+        const formattedValue = (() => {
+          try {
+            if (result.isPercentage) {
+              return `${Number(result.value).toFixed(2)}%`;
+            }
+            return `₹${Number(result.value).toLocaleString("en-IN", {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 0,
+            })}`;
+          } catch (error) {
+            return "Error formatting value";
+          }
+        })();
+
+        return (
+          <div key={result.label} className="bg-gray-50 p-4 rounded-md hover:shadow-md transition-shadow duration-200">
+            <p className="text-sm text-gray-600 mb-1">{result.label}</p>
+            <p className={`text-lg font-semibold ${result.color || "text-gray-900"}`}>{formattedValue}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }

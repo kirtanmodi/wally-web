@@ -4,6 +4,7 @@ import { Tabs } from "antd";
 
 import { FaCalculator, FaChartLine } from "react-icons/fa";
 import SIPCalculator from "./sip/page";
+import SWPCalculator from "./swp/page";
 
 export default function Home() {
   return (
@@ -50,16 +51,7 @@ export default function Home() {
                     SWP Calculator
                   </span>
                 ),
-                children: (
-                  <div className="p-8 max-w-2xl mx-auto">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">About SWP Calculator</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      Our SWP (Systematic Withdrawal Plan) calculator helps you estimate the potential returns on your mutual fund investments. Enter
-                      your monthly investment amount, expected return rate, and investment duration to get detailed insights into your investment
-                      growth.
-                    </p>
-                  </div>
-                ),
+                children: <SWPCalculator />,
               },
             ]}
           />

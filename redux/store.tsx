@@ -1,20 +1,24 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
+import swpSlice from "./slices/swpSlice";
 import sipSlice from "./slices/sipSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: [""], // Only persist the sip reducer
+  whitelist: ["sip"], // Only persist the sip reducer
 };
 
-const persistedReducer = persistReducer(persistConfig, sipSlice);
+const rootReducer = combineReducers({
+  sip: sipSlice,
+  swp: swpSlice,
+});
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    sip: persistedReducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -24,5 +28,8 @@ export const store = configureStore({
 });
 
 export const persistor = persistStore(store);
+
+export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;
 
 export default store;

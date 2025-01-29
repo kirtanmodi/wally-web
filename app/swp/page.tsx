@@ -4,44 +4,55 @@ import { CalculationResults } from "@/components/CalculationResults";
 import { InputField } from "@/components/InputField";
 import { YearlyBreakdownTable } from "@/components/YearlyBreakdownTable";
 import {
-  selectSIPState,
+  selectSWPState,
   setCalculation,
   setError,
   setExpectedReturn,
+  setInitialInvestment,
   setIsCalculating,
-  setMonthlyInvestment,
+  setMonthlyWithdrawal,
   setTimePeriod,
   setYearlyBreakdown,
   setYearlyIncrement,
-  setIsSmartSIP,
-} from "@/redux/slices/sipSlice";
-import { CalculationLogic } from "@/utils/CalculationLogic";
+  setIsSmartSWP,
+} from "@/redux/slices/swpSlice";
+import { SWPCalculationLogic } from "@/utils/SWPCalculationLogic";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 
-export default function SIPCalculator() {
+export default function SWPCalculator() {
   const dispatch = useDispatch();
-  const { monthlyInvestment, expectedReturn, timePeriod, yearlyIncrement, isSmartSIP, calculation, isCalculating, yearlyBreakdown, error } =
-    useSelector(selectSIPState);
+  const {
+    initialInvestment,
+    monthlyWithdrawal,
+    expectedReturn,
+    timePeriod,
+    yearlyIncrement,
+    isSmartSWP,
+    calculation,
+    isCalculating,
+    yearlyBreakdown,
+    error,
+  } = useSelector(selectSWPState);
   const [activeTab, setActiveTab] = useState("calculator");
 
-  const smartSIPControls = (
+  const smartSWPControls = (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
-          id="smartSIP"
-          checked={isSmartSIP}
-          onChange={(e) => dispatch(setIsSmartSIP(e.target.checked))}
+          id="smartSWP"
+          checked={isSmartSWP}
+          onChange={(e) => dispatch(setIsSmartSWP(e.target.checked))}
           className="h-4 w-4 text-blue-600 rounded border-gray-300"
         />
-        <label htmlFor="smartSIP" className="text-sm font-medium text-gray-700">
-          Enable Smart SIP (Yearly Increment)
+        <label htmlFor="smartSWP" className="text-sm font-medium text-gray-700">
+          Enable Smart SWP (Yearly Increment in Withdrawal)
         </label>
       </div>
 
-      {isSmartSIP && (
+      {isSmartSWP && (
         <InputField
           label="Yearly Increment"
           value={yearlyIncrement}
@@ -55,36 +66,34 @@ export default function SIPCalculator() {
     </div>
   );
 
-  const calculateSIP = async () => {
+  const calculateSWP = async () => {
     const toastId = toast.loading("Calculating...");
 
     try {
       dispatch(setError(null));
       dispatch(setIsCalculating(true));
 
-      if (!monthlyInvestment || !expectedReturn || !timePeriod || (isSmartSIP && !yearlyIncrement)) {
+      if (!initialInvestment || !monthlyWithdrawal || !expectedReturn || !timePeriod || (isSmartSWP && !yearlyIncrement)) {
         throw new Error("Please fill in all required fields");
       }
 
-      const monthlyAmount = parseFloat(monthlyInvestment);
+      const principal = parseFloat(initialInvestment);
+      const withdrawal = parseFloat(monthlyWithdrawal);
       const returnRate = parseFloat(expectedReturn);
       const years = parseFloat(timePeriod);
-      const increment = isSmartSIP ? parseFloat(yearlyIncrement) : 0;
+      const increment = isSmartSWP ? parseFloat(yearlyIncrement) : 0;
 
-      CalculationLogic.validateInputs(monthlyAmount, returnRate, years, increment);
+      SWPCalculationLogic.validateInputs(principal, withdrawal, returnRate, years, increment);
 
-      const calculationResult = CalculationLogic.calculateSIP(monthlyAmount, returnRate, years, isSmartSIP, increment);
+      const calculationResult = SWPCalculationLogic.calculateSWP(principal, withdrawal, returnRate, years, isSmartSWP, increment);
       dispatch(setCalculation(calculationResult));
 
-      const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
+      const breakdown = SWPCalculationLogic.calculateYearlyBreakdown(principal, withdrawal, returnRate, years, isSmartSWP, increment);
       dispatch(setYearlyBreakdown(breakdown));
 
       toast.success("Calculation completed successfully!", {
         id: toastId,
       });
-
-      // Automatically switch to results tab after successful calculation
-      // setActiveTab("results");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Calculation failed";
       dispatch(setError(errorMessage));
@@ -98,38 +107,34 @@ export default function SIPCalculator() {
     }
   };
 
-  const sipResults = [
+  const swpResults = [
     {
-      label: "Total Investment",
-      value: calculation?.totalInvestment ?? 0,
+      label: "Initial Investment",
+      value: calculation?.initialInvestment ?? 0,
       color: "text-gray-900",
     },
     {
-      label: "Total Returns",
-      value: calculation?.totalReturns ?? 0,
-      color: "text-green-600",
+      label: "Total Withdrawals",
+      value: calculation?.totalWithdrawals ?? 0,
+      color: "text-red-600",
     },
     {
-      label: "Maturity Value",
-      value: calculation?.maturityValue ?? 0,
+      label: "Remaining Balance",
+      value: calculation?.remainingBalance ?? 0,
       color: "text-blue-600",
     },
     {
-      label: "Annual Return",
-      value: calculation?.annualizedReturn ?? 0,
+      label: "Effective Return",
+      value: calculation?.effectiveReturn ?? 0,
       color: "text-purple-600",
       isPercentage: true,
     },
-  ].map((result) => ({
-    ...result,
-    value: Number.isFinite(result.value) ? result.value : 0,
-  }));
+  ];
 
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="bg-white rounded-lg shadow-md">
-          {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="flex -mb-px">
               <button
@@ -156,14 +161,23 @@ export default function SIPCalculator() {
           <div className="p-6">
             {activeTab === "calculator" && (
               <div className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                   <InputField
-                    label="Monthly Investment"
-                    value={monthlyInvestment}
-                    onChange={(value) => dispatch(setMonthlyInvestment(value))}
+                    label="Initial Investment"
+                    value={initialInvestment}
+                    onChange={(value) => dispatch(setInitialInvestment(value))}
                     suffix="₹"
                     min={0}
-                    placeholder="Enter monthly investment amount"
+                    placeholder="Enter initial investment amount"
+                  />
+
+                  <InputField
+                    label="Monthly Withdrawal"
+                    value={monthlyWithdrawal}
+                    onChange={(value) => dispatch(setMonthlyWithdrawal(value))}
+                    suffix="₹"
+                    min={0}
+                    placeholder="Enter monthly withdrawal amount"
                   />
 
                   <InputField
@@ -183,14 +197,14 @@ export default function SIPCalculator() {
                     suffix="Years"
                     min={0}
                     max={50}
-                    placeholder="Enter investment duration"
+                    placeholder="Enter withdrawal duration"
                   />
                 </div>
 
-                {smartSIPControls}
+                {smartSWPControls}
 
                 <button
-                  onClick={calculateSIP}
+                  onClick={calculateSWP}
                   disabled={isCalculating}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-md text-sm font-medium 
                             hover:bg-blue-700 transition-colors duration-200 
@@ -208,7 +222,7 @@ export default function SIPCalculator() {
 
                 {error && <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm">{error}</div>}
 
-                {calculation && <CalculationResults results={sipResults} />}
+                {calculation && <CalculationResults results={swpResults} />}
               </div>
             )}
 
