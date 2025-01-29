@@ -13,6 +13,7 @@ import {
 } from "@/redux/slices/sipSlice";
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useState } from "react";
 
 // interface SIPCalculation {
 //   totalInvestment: number;
@@ -37,6 +38,7 @@ interface DataType extends YearlyBreakdownItem {
 export default function SIPCalculator() {
   const dispatch = useDispatch();
   const { monthlyInvestment, expectedReturn, timePeriod, calculation, isCalculating, yearlyBreakdown, error } = useSelector(selectSIPState);
+  const [activeTab, setActiveTab] = useState("calculator");
 
   const calculateYearlyBreakdown = (monthlyAmount: number, returnRate: number, years: number) => {
     const breakdown: YearlyBreakdownItem[] = [];
@@ -137,7 +139,16 @@ export default function SIPCalculator() {
       dataIndex: "actualYear",
       key: "actualYear",
       align: "center",
-      render: (value: number) => value,
+      render: (value: number, record: DataType, index: number) => {
+        const date = new Date();
+        date.setFullYear(record.actualYear);
+        const formattedDate = date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+        return `${formattedDate} (Year ${index + 1})`;
+      },
       fixed: "left",
     },
     {
@@ -171,107 +182,122 @@ export default function SIPCalculator() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <div className="backdrop-blur-lg bg-white/10 rounded-2xl p-8 shadow-2xl">
-          <div className="space-y-8">
-            {/* Input Fields */}
-            <div className="space-y-6">
-              <div className="relative">
-                <input
-                  type="number"
-                  value={monthlyInvestment}
-                  onChange={(e) => dispatch(setMonthlyInvestment(e.target.value))}
-                  placeholder="Monthly Investment"
-                  className="w-full bg-transparent border-b-2 border-gray-400 focus:border-blue-400 p-4 outline-none transition-all placeholder-gray-500 text-lg"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="number"
-                  value={expectedReturn}
-                  onChange={(e) => dispatch(setExpectedReturn(e.target.value))}
-                  placeholder="Expected Return"
-                  className="w-full bg-transparent border-b-2 border-gray-400 focus:border-blue-400 p-4 outline-none transition-all placeholder-gray-500 text-lg"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">%</span>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="number"
-                  value={timePeriod}
-                  onChange={(e) => dispatch(setTimePeriod(e.target.value))}
-                  placeholder="Time Period"
-                  className="w-full bg-transparent border-b-2 border-gray-400 focus:border-blue-400 p-4 outline-none transition-all placeholder-gray-500 text-lg"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">Years</span>
-              </div>
-
+    <div className="min-h-screen bg-white">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="bg-white rounded-lg shadow-md">
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex -mb-px">
               <button
-                onClick={calculateSIP}
-                disabled={isCalculating}
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 px-6 rounded-xl text-lg font-medium 
-                          hover:from-blue-600 hover:to-indigo-700 transform transition-all duration-200 
-                          disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg"
+                onClick={() => setActiveTab("calculator")}
+                className={`px-6 py-4 text-sm font-medium ${
+                  activeTab === "calculator" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
               >
-                {isCalculating ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin" />
-                    <span>Calculating...</span>
-                  </div>
-                ) : (
-                  "Calculate"
-                )}
+                Calculator
               </button>
-            </div>
+              {calculation && (
+                <button
+                  onClick={() => setActiveTab("results")}
+                  className={`px-6 py-4 text-sm font-medium ${
+                    activeTab === "results" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Results
+                </button>
+              )}
+            </nav>
+          </div>
 
-            {/* Error Message */}
-            {error && <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-xl text-center animate-fade-in">{error}</div>}
-
-            {/* Results */}
-            {calculation && (
-              <div className="space-y-6 animate-fade-in">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Investment Summary</h3>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-all">
-                    <p className="text-gray-400 text-sm">Total Investment</p>
-                    <p className="text-2xl font-bold font-mono">₹{calculation.totalInvestment.toLocaleString()}</p>
+          <div className="p-6">
+            {activeTab === "calculator" && (
+              <div className="space-y-6">
+                <div className="grid gap-6 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Monthly Investment (₹)</label>
+                    <input
+                      type="number"
+                      value={monthlyInvestment}
+                      onChange={(e) => dispatch(setMonthlyInvestment(e.target.value))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
 
-                  <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-all">
-                    <p className="text-gray-400 text-sm">Total Returns</p>
-                    <p className="text-2xl font-bold font-mono text-green-400">₹{calculation.totalReturns.toLocaleString()}</p>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Expected Return (%)</label>
+                    <input
+                      type="number"
+                      value={expectedReturn}
+                      onChange={(e) => dispatch(setExpectedReturn(e.target.value))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
 
-                  <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-all">
-                    <p className="text-gray-400 text-sm">Maturity Value</p>
-                    <p className="text-2xl font-bold font-mono text-blue-400">₹{calculation.maturityValue.toLocaleString()}</p>
-                  </div>
-
-                  <div className="bg-white/5 p-6 rounded-xl backdrop-blur-sm hover:bg-white/10 transition-all">
-                    <p className="text-gray-400 text-sm">Annual Return</p>
-                    <p className="text-2xl font-bold font-mono text-purple-400">{calculation.annualizedReturn}%</p>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Time Period (Years)</label>
+                    <input
+                      type="number"
+                      value={timePeriod}
+                      onChange={(e) => dispatch(setTimePeriod(e.target.value))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                 </div>
+
+                <button
+                  onClick={calculateSIP}
+                  disabled={isCalculating}
+                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-md text-sm font-medium 
+                            hover:bg-blue-700 transition-colors duration-200 
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCalculating ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin" />
+                      <span>Calculating...</span>
+                    </div>
+                  ) : (
+                    "Calculate"
+                  )}
+                </button>
+
+                {error && <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm">{error}</div>}
+
+                {calculation && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-sm text-gray-600">Total Investment</p>
+                      <p className="text-lg font-semibold">₹{calculation.totalInvestment.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-sm text-gray-600">Total Returns</p>
+                      <p className="text-lg font-semibold text-green-600">₹{calculation.totalReturns.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-sm text-gray-600">Maturity Value</p>
+                      <p className="text-lg font-semibold text-blue-600">₹{calculation.maturityValue.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-md">
+                      <p className="text-sm text-gray-600">Annual Return</p>
+                      <p className="text-lg font-semibold text-purple-600">{calculation.annualizedReturn}%</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {yearlyBreakdown && yearlyBreakdown.length > 0 && (
-              <div className="space-y-6 animate-fade-in">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Yearly Breakdown</h3>
+            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-900">Yearly Breakdown</h3>
                 <Table
-                  columns={columns}
+                  columns={columns as ColumnsType<DataType>}
                   dataSource={yearlyBreakdown.map((item) => ({
                     ...item,
                     key: item.year.toString(),
                   }))}
                   pagination={false}
                   scroll={{ y: 400 }}
-                  className="yearly-breakdown-table"
+                  className="bg-white rounded-lg [&_.ant-table-thead>tr>th]:bg-gray-50 [&_.ant-table-thead>tr>th]:text-gray-700 [&_.ant-table-thead>tr>th]:font-semibold [&_.ant-table-tbody>tr>td]:border-b [&_.ant-table-tbody>tr>td]:border-gray-200 [&_.ant-table-tbody>tr:hover>td]:bg-gray-50"
                 />
               </div>
             )}
@@ -281,3 +307,5 @@ export default function SIPCalculator() {
     </div>
   );
 }
+
+// Add this CSS in the same file

@@ -28,7 +28,7 @@ interface SIPState {
 // Define initial state with proper types
 const initialState: SIPState = {
   monthlyInvestment: "5000",
-  expectedReturn: "10",
+  expectedReturn: "12",
   timePeriod: "10",
   yearlyBreakdown: [],
   calculation: null,
