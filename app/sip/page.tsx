@@ -14,6 +14,9 @@ import {
 import { Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
+import { InputField } from "@/components/InputField";
+import { CalculationResults } from "@/components/CalculationResults";
+import { YearlyBreakdownTable } from "@/components/YearlyBreakdownTable";
 
 // interface SIPCalculation {
 //   totalInvestment: number;
@@ -213,35 +216,34 @@ export default function SIPCalculator() {
             {activeTab === "calculator" && (
               <div className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Monthly Investment (₹)</label>
-                    <input
-                      type="number"
-                      value={monthlyInvestment}
-                      onChange={(e) => dispatch(setMonthlyInvestment(e.target.value))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  <InputField
+                    label="Monthly Investment"
+                    value={monthlyInvestment}
+                    onChange={(value) => dispatch(setMonthlyInvestment(value))}
+                    suffix="₹"
+                    min={0}
+                    placeholder="Enter monthly investment amount"
+                  />
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Expected Return (%)</label>
-                    <input
-                      type="number"
-                      value={expectedReturn}
-                      onChange={(e) => dispatch(setExpectedReturn(e.target.value))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  <InputField
+                    label="Expected Return"
+                    value={expectedReturn}
+                    onChange={(value) => dispatch(setExpectedReturn(value))}
+                    suffix="%"
+                    min={0}
+                    max={100}
+                    placeholder="Enter expected return rate"
+                  />
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Time Period (Years)</label>
-                    <input
-                      type="number"
-                      value={timePeriod}
-                      onChange={(e) => dispatch(setTimePeriod(e.target.value))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
+                  <InputField
+                    label="Time Period"
+                    value={timePeriod}
+                    onChange={(value) => dispatch(setTimePeriod(value))}
+                    suffix="Years"
+                    min={0}
+                    max={50}
+                    placeholder="Enter investment duration"
+                  />
                 </div>
 
                 <button
@@ -263,44 +265,11 @@ export default function SIPCalculator() {
 
                 {error && <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm">{error}</div>}
 
-                {calculation && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      <p className="text-sm text-gray-600">Total Investment</p>
-                      <p className="text-lg font-semibold">₹{calculation.totalInvestment.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      <p className="text-sm text-gray-600">Total Returns</p>
-                      <p className="text-lg font-semibold text-green-600">₹{calculation.totalReturns.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      <p className="text-sm text-gray-600">Maturity Value</p>
-                      <p className="text-lg font-semibold text-blue-600">₹{calculation.maturityValue.toLocaleString()}</p>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-md">
-                      <p className="text-sm text-gray-600">Annual Return</p>
-                      <p className="text-lg font-semibold text-purple-600">{calculation.annualizedReturn}%</p>
-                    </div>
-                  </div>
-                )}
+                {calculation && <CalculationResults calculation={calculation} />}
               </div>
             )}
 
-            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-gray-900">Yearly Breakdown</h3>
-                <Table
-                  columns={columns as ColumnsType<DataType>}
-                  dataSource={yearlyBreakdown.map((item) => ({
-                    ...item,
-                    key: item.year.toString(),
-                  }))}
-                  pagination={false}
-                  scroll={{ y: 400 }}
-                  className="bg-white rounded-lg [&_.ant-table-thead>tr>th]:bg-gray-50 [&_.ant-table-thead>tr>th]:text-gray-700 [&_.ant-table-thead>tr>th]:font-semibold [&_.ant-table-tbody>tr>td]:border-b [&_.ant-table-tbody>tr>td]:border-gray-200 [&_.ant-table-tbody>tr:hover>td]:bg-gray-50"
-                />
-              </div>
-            )}
+            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} />}
           </div>
         </div>
       </div>

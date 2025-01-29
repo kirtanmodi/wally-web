@@ -1,10 +1,9 @@
 "use client";
 
 import { Tabs } from "antd";
-import SIPCalculator from "./components/SIPCalculator";
-import { FaCalculator, FaChartLine, FaInfoCircle } from "react-icons/fa";
 
-const { TabPane } = Tabs;
+import { FaCalculator, FaChartLine, FaInfoCircle } from "react-icons/fa";
+import SIPCalculator from "./sip/page";
 
 export default function Home() {
   return (
