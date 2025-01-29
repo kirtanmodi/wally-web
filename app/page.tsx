@@ -2,7 +2,7 @@
 
 import { Tabs } from "antd";
 
-import { FaCalculator, FaChartLine, FaInfoCircle } from "react-icons/fa";
+import { FaCalculator, FaChartLine } from "react-icons/fa";
 import SIPCalculator from "./sip/page";
 
 export default function Home() {
@@ -37,24 +37,24 @@ export default function Home() {
                 label: (
                   <span className="flex items-center gap-2">
                     <FaChartLine />
-                    Investment Comparison
+                    Lump Sum Calculator
                   </span>
                 ),
-                children: <div className="p-8 text-center text-gray-600">Investment comparison tools coming soon</div>,
+                children: <div className="p-8 text-center text-gray-600">Lump Sum Calculator coming soon</div>,
               },
               {
                 key: "about",
                 label: (
                   <span className="flex items-center gap-2">
-                    <FaInfoCircle />
-                    About
+                    <FaChartLine />
+                    SWP Calculator
                   </span>
                 ),
                 children: (
                   <div className="p-8 max-w-2xl mx-auto">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">About SIP Calculator</h3>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4">About SWP Calculator</h3>
                     <p className="text-gray-600 leading-relaxed">
-                      Our SIP (Systematic Investment Plan) calculator helps you estimate the potential returns on your mutual fund investments. Enter
+                      Our SWP (Systematic Withdrawal Plan) calculator helps you estimate the potential returns on your mutual fund investments. Enter
                       your monthly investment amount, expected return rate, and investment duration to get detailed insights into your investment
                       growth.
                     </p>
