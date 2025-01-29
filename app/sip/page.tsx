@@ -12,6 +12,8 @@ import {
   setMonthlyInvestment,
   setTimePeriod,
   setYearlyBreakdown,
+  setYearlyIncrement,
+  setIsSmartSIP,
 } from "@/redux/slices/sipSlice";
 import { CalculationLogic } from "@/utils/CalculationLogic";
 import { useState } from "react";
@@ -19,28 +21,59 @@ import { useDispatch, useSelector } from "react-redux";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
-  const { monthlyInvestment, expectedReturn, timePeriod, calculation, isCalculating, yearlyBreakdown, error } = useSelector(selectSIPState);
+  const { monthlyInvestment, expectedReturn, timePeriod, yearlyIncrement, isSmartSIP, calculation, isCalculating, yearlyBreakdown, error } =
+    useSelector(selectSIPState);
   const [activeTab, setActiveTab] = useState("calculator");
+
+  const smartSIPControls = (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="smartSIP"
+          checked={isSmartSIP}
+          onChange={(e) => dispatch(setIsSmartSIP(e.target.checked))}
+          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+        />
+        <label htmlFor="smartSIP" className="text-sm font-medium text-gray-700">
+          Enable Smart SIP (Yearly Increment)
+        </label>
+      </div>
+
+      {isSmartSIP && (
+        <InputField
+          label="Yearly Increment"
+          value={yearlyIncrement}
+          onChange={(value) => dispatch(setYearlyIncrement(value))}
+          suffix="%"
+          min={0}
+          max={100}
+          placeholder="Enter yearly increment percentage"
+        />
+      )}
+    </div>
+  );
 
   const calculateSIP = async () => {
     try {
       dispatch(setError(null));
       dispatch(setIsCalculating(true));
 
-      if (!monthlyInvestment || !expectedReturn || !timePeriod) {
+      if (!monthlyInvestment || !expectedReturn || !timePeriod || (isSmartSIP && !yearlyIncrement)) {
         throw new Error("Please fill in all required fields");
       }
 
       const monthlyAmount = parseFloat(monthlyInvestment);
       const returnRate = parseFloat(expectedReturn);
       const years = parseFloat(timePeriod);
+      const increment = isSmartSIP ? parseFloat(yearlyIncrement) : 0;
 
-      CalculationLogic.validateInputs(monthlyAmount, returnRate, years);
+      CalculationLogic.validateInputs(monthlyAmount, returnRate, years, increment);
 
-      const calculationResult = CalculationLogic.calculateSIP(monthlyAmount, returnRate, years);
+      const calculationResult = CalculationLogic.calculateSIP(monthlyAmount, returnRate, years, isSmartSIP, increment);
       dispatch(setCalculation(calculationResult));
 
-      const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years);
+      const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
       dispatch(setYearlyBreakdown(breakdown));
     } catch (error) {
       dispatch(setError(error instanceof Error ? error.message : "Calculation failed"));
@@ -111,6 +144,8 @@ export default function SIPCalculator() {
                     placeholder="Enter investment duration"
                   />
                 </div>
+
+                {smartSIPControls}
 
                 <button
                   onClick={calculateSIP}

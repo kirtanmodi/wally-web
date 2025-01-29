@@ -21,6 +21,8 @@ interface SIPState {
   monthlyInvestment: string;
   expectedReturn: string;
   timePeriod: string;
+  yearlyIncrement: string;
+  isSmartSIP: boolean;
   yearlyBreakdown: YearlyBreakdownItem[];
   calculation: SIPCalculation | null;
   isCalculating: boolean;
@@ -29,9 +31,11 @@ interface SIPState {
 
 // Define initial state with proper types
 const initialState: SIPState = {
-  monthlyInvestment: "5000",
-  expectedReturn: "12",
-  timePeriod: "10",
+  monthlyInvestment: "500",
+  expectedReturn: "10",
+  timePeriod: "2",
+  yearlyIncrement: "10",
+  isSmartSIP: false,
   yearlyBreakdown: [],
   calculation: null,
   isCalculating: false,
@@ -52,6 +56,14 @@ const sipSlice = createSlice({
     },
     setTimePeriod: (state, action: PayloadAction<string>) => {
       state.timePeriod = action.payload;
+      state.error = null;
+    },
+    setYearlyIncrement: (state, action: PayloadAction<string>) => {
+      state.yearlyIncrement = action.payload;
+      state.error = null;
+    },
+    setIsSmartSIP: (state, action: PayloadAction<boolean>) => {
+      state.isSmartSIP = action.payload;
       state.error = null;
     },
     setCalculation: (state, action: PayloadAction<SIPCalculation | null>) => {
@@ -78,6 +90,8 @@ export const {
   setMonthlyInvestment,
   setExpectedReturn,
   setTimePeriod,
+  setYearlyIncrement,
+  setIsSmartSIP,
   setCalculation,
   setYearlyBreakdown,
   setIsCalculating,
