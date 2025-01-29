@@ -226,7 +226,9 @@ export default function SWPCalculator() {
               </div>
             )}
 
-            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} />}
+            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
+              <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} type="swp" />
+            )}
           </div>
         </div>
       </div>

@@ -212,7 +212,9 @@ export default function SIPCalculator() {
               </div>
             )}
 
-            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} />}
+            {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
+              <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} type="sip" />
+            )}
           </div>
         </div>
       </div>
