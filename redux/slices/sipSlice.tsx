@@ -1,9 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // Define strict types for the calculations
-interface YearlyBreakdown {
+interface YearlyBreakdownItem {
   year: number;
+  actualYear: number;
   investment: number;
+  totalInvested: number;
   interest: number;
   balance: number;
 }
@@ -19,7 +21,7 @@ interface SIPState {
   monthlyInvestment: string;
   expectedReturn: string;
   timePeriod: string;
-  yearlyBreakdown: YearlyBreakdown[];
+  yearlyBreakdown: YearlyBreakdownItem[];
   calculation: SIPCalculation | null;
   isCalculating: boolean;
   error: string | null;
@@ -55,7 +57,7 @@ const sipSlice = createSlice({
     setCalculation: (state, action: PayloadAction<SIPCalculation | null>) => {
       state.calculation = action.payload;
     },
-    setYearlyBreakdown: (state, action: PayloadAction<YearlyBreakdown[]>) => {
+    setYearlyBreakdown: (state, action: PayloadAction<YearlyBreakdownItem[]>) => {
       state.yearlyBreakdown = action.payload;
     },
     setIsCalculating: (state, action: PayloadAction<boolean>) => {
@@ -65,7 +67,7 @@ const sipSlice = createSlice({
       state.error = action.payload;
       state.calculation = null;
     },
-    resetCalculator: (state) => {
+    resetCalculator: () => {
       return initialState;
     },
   },

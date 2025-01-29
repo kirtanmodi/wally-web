@@ -1,92 +1,32 @@
 "use client";
 
-import { useDispatch, useSelector } from "react-redux";
-import {
-  setMonthlyInvestment,
-  setExpectedReturn,
-  setTimePeriod,
-  setCalculation,
-  setYearlyBreakdown,
-  setIsCalculating,
-  setError,
-  selectSIPState,
-} from "@/redux/slices/sipSlice";
-import { Table } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { useState } from "react";
-import { InputField } from "@/components/InputField";
 import { CalculationResults } from "@/components/CalculationResults";
+import { InputField } from "@/components/InputField";
 import { YearlyBreakdownTable } from "@/components/YearlyBreakdownTable";
-
-// interface SIPCalculation {
-//   totalInvestment: number;
-//   totalReturns: number;
-//   maturityValue: number;
-//   annualizedReturn: number;
-// }
-
-interface YearlyBreakdownItem {
-  year: number;
-  actualYear: number;
-  investment: number;
-  totalInvested: number;
-  interest: number;
-  balance: number;
-}
-
-interface DataType extends YearlyBreakdownItem {
-  key: string;
-}
+import {
+  selectSIPState,
+  setCalculation,
+  setError,
+  setExpectedReturn,
+  setIsCalculating,
+  setMonthlyInvestment,
+  setTimePeriod,
+  setYearlyBreakdown,
+} from "@/redux/slices/sipSlice";
+import { CalculationLogic } from "@/utils/CalculationLogic";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
   const { monthlyInvestment, expectedReturn, timePeriod, calculation, isCalculating, yearlyBreakdown, error } = useSelector(selectSIPState);
   const [activeTab, setActiveTab] = useState("calculator");
 
-  const calculateYearlyBreakdown = (monthlyAmount: number, returnRate: number, years: number) => {
-    const breakdown: YearlyBreakdownItem[] = [];
-    const monthlyRate = returnRate / (12 * 100);
-    let runningBalance = 0;
-    const startYear = new Date().getFullYear();
-    let totalInvestedSoFar = 0;
-    let previousYearBalance = 0;
-
-    for (let year = 1; year <= years; year++) {
-      const yearlyInvestment = monthlyAmount * 12;
-      totalInvestedSoFar += yearlyInvestment;
-      let yearEndBalance = 0;
-
-      // Calculate month-by-month for accurate compounding
-      for (let month = 1; month <= 12; month++) {
-        yearEndBalance = (runningBalance + monthlyAmount) * (1 + monthlyRate);
-        runningBalance = yearEndBalance;
-      }
-
-      // Calculate returns as the difference between current balance and (previous balance + current year investment)
-      const interest = yearEndBalance - previousYearBalance - yearlyInvestment;
-
-      breakdown.push({
-        year,
-        actualYear: startYear + year - 1,
-        investment: Math.round(yearlyInvestment),
-        totalInvested: Math.round(totalInvestedSoFar),
-        interest: Math.round(interest),
-        balance: Math.round(yearEndBalance),
-      });
-
-      previousYearBalance = yearEndBalance;
-      runningBalance = yearEndBalance;
-    }
-
-    dispatch(setYearlyBreakdown(breakdown));
-  };
-
   const calculateSIP = async () => {
     try {
       dispatch(setError(null));
       dispatch(setIsCalculating(true));
 
-      // Input validation
       if (!monthlyInvestment || !expectedReturn || !timePeriod) {
         throw new Error("Please fill in all required fields");
       }
@@ -95,39 +35,13 @@ export default function SIPCalculator() {
       const returnRate = parseFloat(expectedReturn);
       const years = parseFloat(timePeriod);
 
-      // Validate input ranges
-      if (isNaN(monthlyAmount) || monthlyAmount <= 0) {
-        throw new Error("Monthly investment must be a positive number");
-      }
-      if (isNaN(returnRate) || returnRate <= 0 || returnRate > 100) {
-        throw new Error("Expected return must be between 0 and 100");
-      }
-      if (isNaN(years) || years <= 0 || years > 50) {
-        throw new Error("Time period must be between 0 and 50 years");
-      }
+      CalculationLogic.validateInputs(monthlyAmount, returnRate, years);
 
-      // Calculate monthly rate and total months
-      const monthlyRate = returnRate / (12 * 100);
-      const totalMonths = years * 12;
+      const calculationResult = CalculationLogic.calculateSIP(monthlyAmount, returnRate, years);
+      dispatch(setCalculation(calculationResult));
 
-      // Calculate maturity value using SIP formula
-      const maturityValue = monthlyAmount * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate);
-
-      const totalInvestment = monthlyAmount * totalMonths;
-      const totalReturns = maturityValue - totalInvestment;
-      const annualizedReturn = (Math.pow(maturityValue / totalInvestment, 1 / years) - 1) * 100;
-
-      dispatch(
-        setCalculation({
-          totalInvestment: Math.round(totalInvestment),
-          totalReturns: Math.round(totalReturns),
-          maturityValue: Math.round(maturityValue),
-          annualizedReturn: Math.round(annualizedReturn * 100) / 100,
-        })
-      );
-
-      // Calculate yearly breakdown
-      calculateYearlyBreakdown(monthlyAmount, returnRate, years);
+      const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years);
+      dispatch(setYearlyBreakdown(breakdown));
     } catch (error) {
       dispatch(setError(error instanceof Error ? error.message : "Calculation failed"));
       dispatch(setCalculation(null));
@@ -135,54 +49,6 @@ export default function SIPCalculator() {
       dispatch(setIsCalculating(false));
     }
   };
-
-  const columns: ColumnsType<DataType> = [
-    {
-      title: "Year",
-      dataIndex: "actualYear",
-      key: "actualYear",
-      align: "center",
-      render: (value: number, record: DataType, index: number) => {
-        const date = new Date();
-        date.setFullYear(record.actualYear);
-        const formattedDate = date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
-        return `${formattedDate} (Year ${index + 1})`;
-      },
-      fixed: "left",
-    },
-    {
-      title: "Investment Amount",
-      dataIndex: "investment",
-      key: "investment",
-      align: "right",
-      render: (value: number) => `₹${value.toLocaleString()}`,
-    },
-    {
-      title: "Total Invested",
-      dataIndex: "totalInvested",
-      key: "totalInvested",
-      align: "right",
-      render: (value: number) => `₹${value.toLocaleString()}`,
-    },
-    {
-      title: "Returns",
-      dataIndex: "interest",
-      key: "interest",
-      align: "right",
-      render: (value: number) => `₹${value.toLocaleString()}`,
-    },
-    {
-      title: "Balance",
-      dataIndex: "balance",
-      key: "balance",
-      align: "right",
-      render: (value: number) => `₹${value.toLocaleString()}`,
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-white">
