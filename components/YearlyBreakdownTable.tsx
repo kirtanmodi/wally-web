@@ -4,6 +4,7 @@ import type { ColumnsType } from "antd/es/table";
 interface YearlyBreakdownItem {
   year: number;
   actualYear: number;
+  monthlyInvestment: number;
   investment: number;
   totalInvested: number;
   interest: number;
@@ -36,6 +37,13 @@ export function YearlyBreakdownTable({ yearlyBreakdown }: YearlyBreakdownTablePr
         return `${formattedDate} (Year ${index + 1})`;
       },
       fixed: "left",
+    },
+    {
+      title: "Monthly Investment",
+      dataIndex: "monthlyInvestment",
+      key: "monthlyInvestment",
+      align: "right",
+      render: (value: number) => `₹${value.toLocaleString()}`,
     },
     {
       title: "Investment Amount",

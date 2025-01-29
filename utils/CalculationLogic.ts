@@ -1,6 +1,7 @@
 export interface YearlyBreakdownItem {
 	year: number;
 	actualYear: number;
+	monthlyInvestment: number;
 	investment: number;
 	totalInvested: number;
 	interest: number;
@@ -49,6 +50,7 @@ export class CalculationLogic {
 			breakdown.push({
 				year,
 				actualYear: startYear + year - 1,
+				monthlyInvestment: Math.round(currentMonthlyAmount),
 				investment: Math.round(yearlyInvestment),
 				totalInvested: Math.round(totalInvestedSoFar),
 				interest: Math.round(interest),
