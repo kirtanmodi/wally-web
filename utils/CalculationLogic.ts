@@ -1,12 +1,4 @@
-export interface YearlyBreakdownItem {
-	year: number;
-	actualYear: number;
-	monthlyInvestment: number;
-	investment: number;
-	totalInvested: number;
-	interest: number;
-	balance: number;
-}
+import { YearlyBreakdownItem } from "@/redux/slices/sipSlice";
 
 export interface SIPCalculation {
 	totalInvestment: number;

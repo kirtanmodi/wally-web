@@ -18,6 +18,7 @@ import {
 import { CalculationLogic } from "@/utils/CalculationLogic";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
@@ -55,6 +56,8 @@ export default function SIPCalculator() {
   );
 
   const calculateSIP = async () => {
+    const toastId = toast.loading("Calculating...");
+
     try {
       dispatch(setError(null));
       dispatch(setIsCalculating(true));
@@ -75,9 +78,21 @@ export default function SIPCalculator() {
 
       const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
       dispatch(setYearlyBreakdown(breakdown));
+
+      toast.success("Calculation completed successfully!", {
+        id: toastId,
+      });
+
+      // Automatically switch to results tab after successful calculation
+      // setActiveTab("results");
     } catch (error) {
-      dispatch(setError(error instanceof Error ? error.message : "Calculation failed"));
+      const errorMessage = error instanceof Error ? error.message : "Calculation failed";
+      dispatch(setError(errorMessage));
       dispatch(setCalculation(null));
+
+      toast.error(errorMessage, {
+        id: toastId,
+      });
     } finally {
       dispatch(setIsCalculating(false));
     }

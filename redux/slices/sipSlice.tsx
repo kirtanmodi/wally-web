@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // Define strict types for the calculations
-interface YearlyBreakdownItem {
+export interface YearlyBreakdownItem {
   year: number;
   actualYear: number;
+  monthlyInvestment: number;
   investment: number;
   totalInvested: number;
   interest: number;
