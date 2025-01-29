@@ -11,13 +11,15 @@ import {
   setError,
   selectSIPState,
 } from "@/redux/slices/sipSlice";
+import { Table } from "antd";
+import type { ColumnsType } from "antd/es/table";
 
-interface SIPCalculation {
-  totalInvestment: number;
-  totalReturns: number;
-  maturityValue: number;
-  annualizedReturn: number;
-}
+// interface SIPCalculation {
+//   totalInvestment: number;
+//   totalReturns: number;
+//   maturityValue: number;
+//   annualizedReturn: number;
+// }
 
 interface YearlyBreakdownItem {
   year: number;
@@ -26,28 +28,39 @@ interface YearlyBreakdownItem {
   balance: number;
 }
 
+interface DataType extends YearlyBreakdownItem {
+  key: string;
+}
+
 export default function SIPCalculator() {
   const dispatch = useDispatch();
   const { monthlyInvestment, expectedReturn, timePeriod, calculation, isCalculating, yearlyBreakdown, error } = useSelector(selectSIPState);
 
   const calculateYearlyBreakdown = (monthlyAmount: number, returnRate: number, years: number) => {
     const breakdown = [];
-    let previousBalance = 0;
+    const monthlyRate = returnRate / (12 * 100);
+    let runningBalance = 0;
 
     for (let year = 1; year <= years; year++) {
       const yearlyInvestment = monthlyAmount * 12;
-      const r = returnRate / 100;
-      const balance = previousBalance * (1 + r) + yearlyInvestment * (1 + r / 2);
-      const interest = balance - previousBalance - yearlyInvestment;
+      let yearEndBalance = 0;
+
+      // Calculate month-by-month for accurate compounding
+      for (let month = 1; month <= 12; month++) {
+        yearEndBalance = (runningBalance + monthlyAmount) * (1 + monthlyRate);
+        runningBalance = yearEndBalance;
+      }
+
+      const interest = yearEndBalance - runningBalance + yearlyInvestment;
 
       breakdown.push({
         year,
         investment: Math.round(yearlyInvestment),
         interest: Math.round(interest),
-        balance: Math.round(balance),
+        balance: Math.round(yearEndBalance),
       });
 
-      previousBalance = balance;
+      runningBalance = yearEndBalance;
     }
 
     dispatch(setYearlyBreakdown(breakdown));
@@ -107,6 +120,37 @@ export default function SIPCalculator() {
       dispatch(setIsCalculating(false));
     }
   };
+
+  const columns: ColumnsType<DataType> = [
+    {
+      title: "Year",
+      dataIndex: "year",
+      key: "year",
+      align: "center",
+    },
+    {
+      title: "Investment",
+      dataIndex: "investment",
+      key: "investment",
+      align: "right",
+      render: (value: number) => `₹${value.toLocaleString()}`,
+    },
+    {
+      title: "Interest",
+      dataIndex: "interest",
+      key: "interest",
+      align: "right",
+      render: (value: number) => `₹${value.toLocaleString()}`,
+    },
+    {
+      title: "Balance",
+      dataIndex: "balance",
+      key: "balance",
+      align: "right",
+      render: (value: number) => `₹${value.toLocaleString()}`,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -194,6 +238,22 @@ export default function SIPCalculator() {
                     <p className="text-2xl font-bold font-mono text-purple-400">{calculation.annualizedReturn}%</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {yearlyBreakdown && yearlyBreakdown.length > 0 && (
+              <div className="space-y-6 animate-fade-in">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Yearly Breakdown</h3>
+                <Table
+                  columns={columns}
+                  dataSource={yearlyBreakdown.map((item) => ({
+                    ...item,
+                    key: item.year.toString(),
+                  }))}
+                  pagination={false}
+                  scroll={{ y: 400 }}
+                  className="yearly-breakdown-table"
+                />
               </div>
             )}
           </div>

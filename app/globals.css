@@ -19,3 +19,31 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.yearly-breakdown-table {
+  @apply mt-6;
+}
+
+.yearly-breakdown-table .ant-table {
+  @apply bg-transparent;
+}
+
+.yearly-breakdown-table .ant-table-thead > tr > th {
+  @apply bg-white/10 text-gray-200 border-gray-700;
+}
+
+.yearly-breakdown-table .ant-table-tbody > tr > td {
+  @apply bg-transparent text-gray-300 border-gray-700;
+}
+
+.yearly-breakdown-table .ant-table-tbody > tr:hover > td {
+  @apply bg-white/5;
+}
+
+.yearly-breakdown-table .ant-table-cell {
+  @apply transition-colors;
+}
+
+.yearly-breakdown-table .ant-table-tbody > tr.ant-table-row:hover > td {
+  @apply bg-white/10;
+}
