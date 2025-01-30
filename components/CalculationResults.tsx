@@ -32,7 +32,8 @@ export function CalculationResults({ results }: CalculationResultsProps) {
               maximumFractionDigits: 2,
               minimumFractionDigits: 0,
             })}`;
-          } catch (error) {
+          } catch (e) {
+            console.error(e);
             return "Error formatting value";
           }
         })();
