@@ -9,7 +9,7 @@ import SWPCalculator from "./swp/page";
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
-      <main className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <main className="container mx-auto py-8 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">Financial Planning Tools</h1>
@@ -24,9 +24,9 @@ export default function Home() {
             centered
             items={[
               {
-                key: "calculator",
+                key: "sip",
                 label: (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center">
                     <FaCalculator />
                     SIP Calculator
                   </span>
@@ -34,9 +34,9 @@ export default function Home() {
                 children: <SIPCalculator />,
               },
               {
-                key: "comparison",
+                key: "lumpsum",
                 label: (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center">
                     <FaChartLine />
                     Lump Sum Calculator
                   </span>
@@ -44,9 +44,9 @@ export default function Home() {
                 children: <div className="p-8 text-center text-gray-600">Lump Sum Calculator coming soon</div>,
               },
               {
-                key: "about",
+                key: "swp",
                 label: (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center">
                     <FaChartLine />
                     SWP Calculator
                   </span>

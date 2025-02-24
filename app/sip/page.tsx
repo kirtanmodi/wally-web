@@ -127,7 +127,7 @@ export default function SIPCalculator() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="">
         <div className="bg-white rounded-lg shadow-md">
           {/* Tabs */}
           <div className="border-b border-gray-200">

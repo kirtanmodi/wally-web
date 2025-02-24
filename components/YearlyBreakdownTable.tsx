@@ -31,7 +31,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "actualYear",
         key: "actualYear",
         align: "center",
-        width: 140,
+        width: 100,
         render: (value: number, record: DataType, index: number) => {
           const date = new Date();
           date.setFullYear(record.actualYear);
@@ -49,7 +49,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "balance",
         key: "balance",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value.toLocaleString()}`,
       },
     ];
@@ -60,7 +60,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "monthlyInvestment",
         key: "monthlyInvestment",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
       {
@@ -68,7 +68,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "investment",
         key: "investment",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
       {
@@ -76,7 +76,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "totalInvested",
         key: "totalInvested",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
       {
@@ -84,7 +84,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "interest",
         key: "interest",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
     ];
@@ -95,7 +95,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "monthlyWithdrawal",
         key: "monthlyWithdrawal",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
       {
@@ -103,7 +103,7 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
         dataIndex: "totalWithdrawals",
         key: "totalWithdrawals",
         align: "right",
-        width: 120,
+        width: 100,
         render: (value: number) => `₹${value?.toLocaleString() ?? 0}`,
       },
     ];
