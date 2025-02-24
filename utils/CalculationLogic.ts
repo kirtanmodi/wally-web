@@ -56,6 +56,58 @@ export class CalculationLogic {
 		return breakdown;
 	}
 
+	static calculateReverseYearlyBreakdown(
+		monthlyAmount: number,
+		returnRate: number,
+		years: number,
+		isSmartSIP: boolean = false,
+		yearlyIncrement: number = 0
+	): YearlyBreakdownItem[] {
+		// First get the normal order investments to know what amounts we need to reverse
+		const normalBreakdown = this.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, yearlyIncrement);
+
+		// Get all monthly investment amounts in reverse order
+		const monthlyInvestments = normalBreakdown
+			.map(year => year.monthlyInvestment)
+			.reverse();
+
+		const breakdown: YearlyBreakdownItem[] = [];
+		const monthlyRate = returnRate / (12 * 100);
+		let runningBalance = 0;
+		const startYear = new Date().getFullYear();
+		let totalInvestedSoFar = 0;
+		let previousYearBalance = 0;
+
+		for (let year = 1; year <= years; year++) {
+			const currentMonthlyAmount = monthlyInvestments[year - 1];
+			const yearlyInvestment = currentMonthlyAmount * 12;
+			totalInvestedSoFar += yearlyInvestment;
+			let yearEndBalance = 0;
+
+			for (let month = 1; month <= 12; month++) {
+				yearEndBalance = (runningBalance + currentMonthlyAmount) * (1 + monthlyRate);
+				runningBalance = yearEndBalance;
+			}
+
+			const interest = yearEndBalance - previousYearBalance - yearlyInvestment;
+
+			breakdown.push({
+				year,
+				actualYear: startYear + year - 1,
+				monthlyInvestment: Math.round(currentMonthlyAmount),
+				investment: Math.round(yearlyInvestment),
+				totalInvested: Math.round(totalInvestedSoFar),
+				interest: Math.round(interest),
+				balance: Math.round(yearEndBalance),
+			});
+
+			previousYearBalance = yearEndBalance;
+			runningBalance = yearEndBalance;
+		}
+
+		return breakdown;
+	}
+
 	static calculateSIP(
 		monthlyAmount: number,
 		returnRate: number,

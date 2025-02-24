@@ -19,12 +19,14 @@ import { CalculationLogic } from "@/utils/CalculationLogic";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { Switch } from "antd";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
   const { monthlyInvestment, expectedReturn, timePeriod, yearlyIncrement, isSmartSIP, calculation, isCalculating, yearlyBreakdown, error } =
     useSelector(selectSIPState);
   const [activeTab, setActiveTab] = useState("calculator");
+  const [isReversed, setIsReversed] = useState(false);
 
   const smartSIPControls = (
     <div className="space-y-4">
@@ -55,7 +57,7 @@ export default function SIPCalculator() {
     </div>
   );
 
-  const calculateSIP = async () => {
+  const calculateSIP = async (reversed: boolean = isReversed) => {
     const toastId = toast.loading("Calculating...");
 
     try {
@@ -73,18 +75,23 @@ export default function SIPCalculator() {
 
       CalculationLogic.validateInputs(monthlyAmount, returnRate, years, increment);
 
-      const calculationResult = CalculationLogic.calculateSIP(monthlyAmount, returnRate, years, isSmartSIP, increment);
-      dispatch(setCalculation(calculationResult));
+      const breakdown = reversed
+        ? CalculationLogic.calculateReverseYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment)
+        : CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
 
-      const breakdown = CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
+      const calculationResult = {
+        totalInvestment: breakdown[breakdown.length - 1].totalInvested,
+        totalReturns: breakdown[breakdown.length - 1].balance - breakdown[breakdown.length - 1].totalInvested,
+        maturityValue: breakdown[breakdown.length - 1].balance,
+        annualizedReturn: Math.round((Math.pow(breakdown[breakdown.length - 1].balance / breakdown[breakdown.length - 1].totalInvested, 1 / years) - 1) * 100 * 100) / 100,
+      };
+
+      dispatch(setCalculation(calculationResult));
       dispatch(setYearlyBreakdown(breakdown));
 
       toast.success("Calculation completed successfully!", {
         id: toastId,
       });
-
-      // Automatically switch to results tab after successful calculation
-      // setActiveTab("results");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Calculation failed";
       dispatch(setError(errorMessage));
@@ -125,6 +132,13 @@ export default function SIPCalculator() {
     value: Number.isFinite(result.value) ? result.value : 0,
   }));
 
+
+  const onReverseToggle = (checked: boolean) => {
+    setIsReversed(checked);
+    calculateSIP(checked);
+  };
+
+
   return (
     <div className="min-h-screen bg-white">
       <div className="">
@@ -134,18 +148,16 @@ export default function SIPCalculator() {
             <nav className="flex -mb-px">
               <button
                 onClick={() => setActiveTab("calculator")}
-                className={`px-6 py-4 text-sm font-medium ${
-                  activeTab === "calculator" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
+                className={`px-6 py-4 text-sm font-medium ${activeTab === "calculator" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
               >
                 Calculator
               </button>
               {calculation && (
                 <button
                   onClick={() => setActiveTab("results")}
-                  className={`px-6 py-4 text-sm font-medium ${
-                    activeTab === "results" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
+                  className={`px-6 py-4 text-sm font-medium ${activeTab === "results" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}
                 >
                   Results
                 </button>
@@ -187,10 +199,21 @@ export default function SIPCalculator() {
                   />
                 </div>
 
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={isReversed}
+                    onChange={onReverseToggle}
+                    className={isReversed ? "bg-blue-600" : ""}
+                  />
+                  <span className="text-sm text-gray-600">
+                    Reverse Investment Order
+                  </span>
+                </div>
+
                 {smartSIPControls}
 
                 <button
-                  onClick={calculateSIP}
+                  onClick={() => calculateSIP()}
                   disabled={isCalculating}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-md text-sm font-medium 
                             hover:bg-blue-700 transition-colors duration-200 
@@ -213,7 +236,10 @@ export default function SIPCalculator() {
             )}
 
             {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
-              <YearlyBreakdownTable yearlyBreakdown={yearlyBreakdown} type="sip" />
+              <YearlyBreakdownTable
+                yearlyBreakdown={yearlyBreakdown}
+                type="sip"
+              />
             )}
           </div>
         </div>

@@ -23,7 +23,11 @@ interface YearlyBreakdownTableProps {
   title?: string;
 }
 
-export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Breakdown" }: YearlyBreakdownTableProps) {
+export function YearlyBreakdownTable({ 
+  yearlyBreakdown, 
+  type, 
+  title = "Yearly Breakdown"
+}: YearlyBreakdownTableProps) {
   const getColumns = (): ColumnsType<DataType> => {
     const baseColumns: ColumnsType<DataType> = [
       {
@@ -115,7 +119,9 @@ export function YearlyBreakdownTable({ yearlyBreakdown, type, title = "Yearly Br
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
+      </div>
       <div className="overflow-x-auto">
         <Table
           columns={getColumns()}
