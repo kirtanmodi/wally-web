@@ -3,6 +3,7 @@ interface CalculationResultItem {
   value: number;
   color: string;
   isPercentage?: boolean;
+  icon?: string;
 }
 
 interface CalculationResultsProps {
@@ -28,7 +29,20 @@ export function CalculationResults({ results }: CalculationResultsProps) {
             if (result.isPercentage) {
               return `${Number(result.value).toFixed(2)}%`;
             }
-            return `₹${Number(result.value).toLocaleString("en-IN", {
+
+            const value = Number(result.value);
+            
+            if (value >= 1000000000) {
+              return `₹${(value / 1000000000).toFixed(2)} Billion`;
+            } else if (value >= 10000000) {
+              return `₹${(value / 10000000).toFixed(2)} Crore`;
+            } else if (value >= 100000) {
+              return `₹${(value / 100000).toFixed(2)} Lakh`;
+            } else if (value >= 1000) {
+              return `₹${(value / 1000).toFixed(2)}K`;
+            }
+
+            return `₹${value.toLocaleString("en-IN", {
               maximumFractionDigits: 2,
               minimumFractionDigits: 0,
             })}`;
@@ -40,6 +54,7 @@ export function CalculationResults({ results }: CalculationResultsProps) {
 
         return (
           <div key={result.label} className="bg-gray-50 p-4 rounded-md hover:shadow-md transition-shadow duration-200">
+            <p className="text-2xl">{result.icon}</p>
             <p className="text-sm text-gray-600 mb-1">{result.label}</p>
             <p className={`text-lg font-semibold ${result.color || "text-gray-900"}`}>{formattedValue}</p>
           </div>

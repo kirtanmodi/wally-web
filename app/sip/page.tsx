@@ -16,45 +16,79 @@ import {
   setIsSmartSIP,
 } from "@/redux/slices/sipSlice";
 import { CalculationLogic } from "@/utils/CalculationLogic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { Switch } from "antd";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
-  const { monthlyInvestment, expectedReturn, timePeriod, yearlyIncrement, isSmartSIP, calculation, isCalculating, yearlyBreakdown, error } =
-    useSelector(selectSIPState);
+  const { 
+    monthlyInvestment, 
+    expectedReturn, 
+    timePeriod, 
+    yearlyIncrement, 
+    isSmartSIP, 
+    calculation, 
+    isCalculating, 
+    yearlyBreakdown, 
+    error 
+  } = useSelector(selectSIPState);
+  
   const [activeTab, setActiveTab] = useState("calculator");
   const [isReversed, setIsReversed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const smartSIPControls = (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="smartSIP"
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4 bg-gray-50 p-4 rounded-xl shadow-sm"
+    >
+      <div className="flex items-center gap-3">
+        <Switch
           checked={isSmartSIP}
-          onChange={(e) => dispatch(setIsSmartSIP(e.target.checked))}
-          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+          onChange={(checked) => dispatch(setIsSmartSIP(checked))}
+          className={`${isSmartSIP ? "bg-blue-600" : ""} transition-colors duration-200`}
         />
-        <label htmlFor="smartSIP" className="text-sm font-medium text-gray-700">
-          Enable Smart SIP (Yearly Increment)
+        <label className="text-sm font-medium">
+          Smart SIP (Yearly Increment)
         </label>
       </div>
 
-      {isSmartSIP && (
-        <InputField
-          label="Yearly Increment"
-          value={yearlyIncrement}
-          onChange={(value) => dispatch(setYearlyIncrement(value))}
-          suffix="%"
-          min={0}
-          max={100}
-          placeholder="Enter yearly increment percentage"
-        />
-      )}
-    </div>
+      <AnimatePresence>
+        {isSmartSIP && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <InputField
+              label="Yearly Increment"
+              value={yearlyIncrement}
+              onChange={(value) => dispatch(setYearlyIncrement(value))}
+              suffix="%"
+              min={0}
+              max={100}
+              placeholder="Enter yearly increment percentage"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 
   const calculateSIP = async (reversed: boolean = isReversed) => {
@@ -89,17 +123,16 @@ export default function SIPCalculator() {
       dispatch(setCalculation(calculationResult));
       dispatch(setYearlyBreakdown(breakdown));
 
-      toast.success("Calculation completed successfully!", {
-        id: toastId,
-      });
+      // if (activeTab === "calculator") {
+      //   setActiveTab("results");
+      // }
+
+      toast.success("Calculation completed successfully!", { id: toastId });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Calculation failed";
       dispatch(setError(errorMessage));
       dispatch(setCalculation(null));
-
-      toast.error(errorMessage, {
-        id: toastId,
-      });
+      toast.error(errorMessage, { id: toastId });
     } finally {
       dispatch(setIsCalculating(false));
     }
@@ -110,65 +143,69 @@ export default function SIPCalculator() {
       label: "Total Investment",
       value: calculation?.totalInvestment ?? 0,
       color: "text-gray-900",
+      icon: "💰",
     },
     {
       label: "Total Returns",
       value: calculation?.totalReturns ?? 0,
       color: "text-green-600",
+      icon: "📈",
     },
     {
       label: "Maturity Value",
       value: calculation?.maturityValue ?? 0,
       color: "text-blue-600",
+      icon: "🎯",
     },
     {
       label: "Annual Return",
       value: calculation?.annualizedReturn ?? 0,
       color: "text-purple-600",
       isPercentage: true,
+      icon: "⭐",
     },
   ].map((result) => ({
     ...result,
     value: Number.isFinite(result.value) ? result.value : 0,
   }));
 
-
-  const onReverseToggle = (checked: boolean) => {
-    setIsReversed(checked);
-    calculateSIP(checked);
-  };
-
-
   return (
-    <div className="min-h-screen bg-white">
-      <div className="">
-        <div className="bg-white rounded-lg shadow-md">
-          {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              <button
-                onClick={() => setActiveTab("calculator")}
-                className={`px-6 py-4 text-sm font-medium ${activeTab === "calculator" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  }`}
-              >
-                Calculator
-              </button>
-              {calculation && (
-                <button
-                  onClick={() => setActiveTab("results")}
-                  className={`px-6 py-4 text-sm font-medium ${activeTab === "results" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                    }`}
-                >
-                  Results
-                </button>
-              )}
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className=" rounded-2xl shadow-xl overflow-hidden"
+        >
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex">
+              {["calculator", "results"].map((tab) => (
+                (tab === "results" && !calculation) ? null : (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`
+                      flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200
+                      ${activeTab === tab 
+                        ? "border-b-2 border-blue-500 text-blue-600 dark:text-blue-400" 
+                        : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"}
+                    `}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                )
+              ))}
             </nav>
           </div>
 
           <div className="p-6">
             {activeTab === "calculator" && (
-              <div className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-3">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-6"
+              >
+                <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-3'}`}>
                   <InputField
                     label="Monthly Investment"
                     value={monthlyInvestment}
@@ -199,50 +236,69 @@ export default function SIPCalculator() {
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3 p-4 rounded-xl">
                   <Switch
                     checked={isReversed}
-                    onChange={onReverseToggle}
+                    onChange={(checked) => {
+                      setIsReversed(checked);
+                      if (calculation) calculateSIP(checked);
+                    }}
                     className={isReversed ? "bg-blue-600" : ""}
                   />
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm">
                     Reverse Investment Order
                   </span>
                 </div>
 
                 {smartSIPControls}
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => calculateSIP()}
                   disabled={isCalculating}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-md text-sm font-medium 
-                            hover:bg-blue-700 transition-colors duration-200 
-                            disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 py-4 px-6 rounded-xl
+                    text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
                 >
                   {isCalculating ? (
                     <div className="flex items-center justify-center gap-2">
-                      <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin" />
                       <span>Calculating...</span>
                     </div>
                   ) : (
-                    "Calculate"
+                    "Calculate Investment"
                   )}
-                </button>
+                </motion.button>
 
-                {error && <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-md text-sm">{error}</div>}
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 
+                      text-red-600 dark:text-red-400 p-4 rounded-xl text-sm"
+                  >
+                    {error}
+                  </motion.div>
+                )}
 
                 {calculation && <CalculationResults results={sipResults} />}
-              </div>
+              </motion.div>
             )}
 
             {activeTab === "results" && yearlyBreakdown && yearlyBreakdown.length > 0 && (
-              <YearlyBreakdownTable
-                yearlyBreakdown={yearlyBreakdown}
-                type="sip"
-              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <YearlyBreakdownTable
+                  yearlyBreakdown={yearlyBreakdown}
+                  type="sip"
+                />
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
