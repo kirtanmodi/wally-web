@@ -3,7 +3,7 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import swpSlice from "./slices/swpSlice";
 import sipSlice from "./slices/sipSlice";
-
+import goalsSlice from "./slices/goalsSlice";
 const persistConfig = {
   key: "root",
   storage,
@@ -13,6 +13,7 @@ const persistConfig = {
 const rootReducer = combineReducers({
   sip: sipSlice,
   swp: swpSlice,
+  goals: goalsSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

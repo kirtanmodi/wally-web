@@ -3,6 +3,7 @@
 import { CalculationResults } from "@/components/CalculationResults";
 import { InputField } from "@/components/InputField";
 import { YearlyBreakdownTable } from "@/components/YearlyBreakdownTable";
+import { InvestmentGoals, InvestmentGoal } from "@/components/InvestmentGoals";
 import {
   selectSIPState,
   setCalculation,
@@ -15,6 +16,13 @@ import {
   setYearlyIncrement,
   setIsSmartSIP,
 } from "@/redux/slices/sipSlice";
+import {
+  selectGoals,
+  addGoal,
+  updateGoal,
+  deleteGoal,
+  updateGoalProgress,
+} from "@/redux/slices/goalsSlice";
 import { CalculationLogic } from "@/utils/CalculationLogic";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,6 +45,7 @@ export default function SIPCalculator() {
     error 
   } = useSelector(selectSIPState);
   
+  const goals = useSelector(selectGoals);
   const [activeTab, setActiveTab] = useState("calculator");
   const [isReversed, setIsReversed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -170,17 +179,28 @@ export default function SIPCalculator() {
     value: Number.isFinite(result.value) ? result.value : 0,
   }));
 
+  // Update goal progress when calculation changes
+  useEffect(() => {
+    if (calculation && yearlyBreakdown) {
+      goals.forEach((goal: InvestmentGoal) => {
+        const currentValue = yearlyBreakdown[Math.min(goal.targetYear - 1, yearlyBreakdown.length - 1)]?.balance || 0;
+        const progress = (currentValue / goal.targetAmount) * 100;
+        dispatch(updateGoalProgress({ id: goal.id, progress: Math.min(progress, 100) }));
+      });
+    }
+  }, [calculation, yearlyBreakdown, goals, dispatch]);
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto py-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className=" rounded-2xl shadow-xl overflow-hidden"
+          className="rounded-2xl shadow-xl overflow-hidden"
         >
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex">
-              {["calculator", "results"].map((tab) => (
+              {["calculator", "goals", "results"].map((tab) => (
                 (tab === "results" && !calculation) ? null : (
                   <button
                     key={tab}
@@ -284,6 +304,22 @@ export default function SIPCalculator() {
                 )}
 
                 {calculation && <CalculationResults results={sipResults} />}
+              </motion.div>
+            )}
+
+            {activeTab === "goals" && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-6"
+              >
+                <InvestmentGoals
+                  goals={goals}
+                  onAddGoal={(goal) => dispatch(addGoal(goal))}
+                  onUpdateGoal={(goal) => dispatch(updateGoal(goal))}
+                  onDeleteGoal={(goalId) => dispatch(deleteGoal(goalId))}
+                  expectedReturn={parseFloat(expectedReturn)}
+                />
               </motion.div>
             )}
 
