@@ -21,6 +21,7 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { Switch } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
+import { InvestmentCharts } from "@/components/InvestmentCharts";
 
 export default function SIPCalculator() {
   const dispatch = useDispatch();
@@ -291,10 +292,13 @@ export default function SIPCalculator() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <YearlyBreakdownTable
-                  yearlyBreakdown={yearlyBreakdown}
-                  type="sip"
-                />
+                <InvestmentCharts yearlyBreakdown={yearlyBreakdown} />
+                <div className="mt-8">
+                  <YearlyBreakdownTable
+                    yearlyBreakdown={yearlyBreakdown}
+                    type="sip"
+                  />
+                </div>
               </motion.div>
             )}
           </div>
