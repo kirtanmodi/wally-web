@@ -7,13 +7,22 @@ export interface SIPCalculation {
 	annualizedReturn: number;
 }
 
+// export interface YearlyBreakdownItem {
+// 	year: number;
+// 	monthlyInvestment: number;
+// 	totalInvested: number;
+// 	balance: number;
+// 	inflationAdjustedBalance?: number;
+// }
+
 export class CalculationLogic {
 	static calculateYearlyBreakdown(
 		monthlyAmount: number,
 		returnRate: number,
 		years: number,
 		isSmartSIP: boolean = false,
-		yearlyIncrement: number = 0
+		yearlyIncrement: number = 0,
+		inflationRate: number = 0
 	): YearlyBreakdownItem[] {
 		const breakdown: YearlyBreakdownItem[] = [];
 		const monthlyRate = returnRate / (12 * 100);
@@ -22,6 +31,7 @@ export class CalculationLogic {
 		let totalInvestedSoFar = 0;
 		let previousYearBalance = 0;
 		let currentMonthlyAmount = monthlyAmount;
+		// const monthlyInflationRate = inflationRate / 12 / 100;
 
 		for (let year = 1; year <= years; year++) {
 			if (isSmartSIP && year > 1) {
@@ -37,6 +47,8 @@ export class CalculationLogic {
 				runningBalance = yearEndBalance;
 			}
 
+			const inflationAdjustedBalance = yearEndBalance / Math.pow(1 + inflationRate / 100, year);
+
 			const interest = yearEndBalance - previousYearBalance - yearlyInvestment;
 
 			breakdown.push({
@@ -47,6 +59,7 @@ export class CalculationLogic {
 				totalInvested: Math.round(totalInvestedSoFar),
 				interest: Math.round(interest),
 				balance: Math.round(yearEndBalance),
+				inflationAdjustedBalance: Math.round(inflationAdjustedBalance),
 			});
 
 			previousYearBalance = yearEndBalance;
@@ -61,10 +74,11 @@ export class CalculationLogic {
 		returnRate: number,
 		years: number,
 		isSmartSIP: boolean = false,
-		yearlyIncrement: number = 0
+		yearlyIncrement: number = 0,
+		inflationRate: number = 0
 	): YearlyBreakdownItem[] {
 		// First get the normal order investments to know what amounts we need to reverse
-		const normalBreakdown = this.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, yearlyIncrement);
+		const normalBreakdown = this.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, yearlyIncrement, inflationRate);
 
 		// Get all monthly investment amounts in reverse order
 		const monthlyInvestments = normalBreakdown
@@ -89,6 +103,8 @@ export class CalculationLogic {
 				runningBalance = yearEndBalance;
 			}
 
+			const inflationAdjustedBalance = yearEndBalance / Math.pow(1 + inflationRate / 100, year);
+
 			const interest = yearEndBalance - previousYearBalance - yearlyInvestment;
 
 			breakdown.push({
@@ -99,6 +115,7 @@ export class CalculationLogic {
 				totalInvested: Math.round(totalInvestedSoFar),
 				interest: Math.round(interest),
 				balance: Math.round(yearEndBalance),
+				inflationAdjustedBalance: Math.round(inflationAdjustedBalance),
 			});
 
 			previousYearBalance = yearEndBalance;
@@ -113,9 +130,10 @@ export class CalculationLogic {
 		returnRate: number,
 		years: number,
 		isSmartSIP: boolean = false,
-		yearlyIncrement: number = 0
+		yearlyIncrement: number = 0,
+		inflationRate: number = 0
 	): SIPCalculation {
-		const breakdown = this.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, yearlyIncrement);
+		const breakdown = this.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, yearlyIncrement, inflationRate);
 		const lastYear = breakdown[breakdown.length - 1];
 
 		return {
@@ -126,18 +144,31 @@ export class CalculationLogic {
 		};
 	}
 
-	static validateInputs(monthlyAmount: number, returnRate: number, years: number, yearlyIncrement?: number): void {
-		if (isNaN(monthlyAmount) || monthlyAmount <= 0) {
-			throw new Error("Monthly investment must be a positive number");
+	static validateInputs(
+		monthlyInvestment: number,
+		returnRate: number,
+		years: number,
+		yearlyIncrement: number = 0,
+		inflationRate: number = 0
+	) {
+		if (monthlyInvestment <= 0) {
+			throw new Error("Monthly investment must be greater than 0");
 		}
-		if (isNaN(returnRate) || returnRate <= 0 || returnRate > 100) {
-			throw new Error("Expected return must be between 0 and 100");
+		if (returnRate <= 0) {
+			throw new Error("Expected return rate must be greater than 0");
 		}
-		if (isNaN(years) || years <= 0 || years > 50) {
-			throw new Error("Time period must be between 0 and 50 years");
+		if (years <= 0) {
+			throw new Error("Time period must be greater than 0");
 		}
-		if (yearlyIncrement !== undefined && (isNaN(yearlyIncrement) || yearlyIncrement < 0 || yearlyIncrement > 100)) {
-			throw new Error("Yearly increment must be between 0 and 100");
+		if (yearlyIncrement < 0) {
+			throw new Error("Yearly increment cannot be negative");
 		}
+		if (inflationRate < 0) {
+			throw new Error("Inflation rate cannot be negative");
+		}
+	}
+
+	static calculateRealRate(nominalRate: number, inflationRate: number): number {
+		return ((1 + nominalRate / 100) / (1 + inflationRate / 100) - 1) * 100;
 	}
 }

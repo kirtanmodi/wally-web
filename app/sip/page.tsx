@@ -15,6 +15,7 @@ import {
   setYearlyBreakdown,
   setYearlyIncrement,
   setIsSmartSIP,
+  setInflationRate,
 } from "@/redux/slices/sipSlice";
 import {
   selectGoals,
@@ -38,7 +39,8 @@ export default function SIPCalculator() {
     expectedReturn, 
     timePeriod, 
     yearlyIncrement, 
-    isSmartSIP, 
+    isSmartSIP,
+    inflationRate,
     calculation, 
     isCalculating, 
     yearlyBreakdown, 
@@ -116,26 +118,29 @@ export default function SIPCalculator() {
       const returnRate = parseFloat(expectedReturn);
       const years = parseFloat(timePeriod);
       const increment = isSmartSIP ? parseFloat(yearlyIncrement) : 0;
+      const inflation = parseFloat(inflationRate);
 
-      CalculationLogic.validateInputs(monthlyAmount, returnRate, years, increment);
+      CalculationLogic.validateInputs(monthlyAmount, returnRate, years, increment, inflation);
 
       const breakdown = reversed
-        ? CalculationLogic.calculateReverseYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment)
-        : CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment);
+        ? CalculationLogic.calculateReverseYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment, inflation)
+        : CalculationLogic.calculateYearlyBreakdown(monthlyAmount, returnRate, years, isSmartSIP, increment, inflation);
+
+      const lastYear = breakdown[breakdown.length - 1];
+      const realRate = CalculationLogic.calculateRealRate(returnRate, inflation);
 
       const calculationResult = {
-        totalInvestment: breakdown[breakdown.length - 1].totalInvested,
-        totalReturns: breakdown[breakdown.length - 1].balance - breakdown[breakdown.length - 1].totalInvested,
-        maturityValue: breakdown[breakdown.length - 1].balance,
-        annualizedReturn: Math.round((Math.pow(breakdown[breakdown.length - 1].balance / breakdown[breakdown.length - 1].totalInvested, 1 / years) - 1) * 100 * 100) / 100,
+        totalInvestment: lastYear.totalInvested,
+        totalReturns: lastYear.balance - lastYear.totalInvested,
+        maturityValue: lastYear.balance,
+        annualizedReturn: Math.round((Math.pow(lastYear.balance / lastYear.totalInvested, 1 / years) - 1) * 100 * 100) / 100,
+        inflationAdjustedReturns: lastYear.inflationAdjustedBalance! - lastYear.totalInvested,
+        inflationAdjustedValue: lastYear.inflationAdjustedBalance!,
+        realRate: Math.round(realRate * 100) / 100,
       };
 
       dispatch(setCalculation(calculationResult));
       dispatch(setYearlyBreakdown(breakdown));
-
-      // if (activeTab === "calculator") {
-      //   setActiveTab("results");
-      // }
 
       toast.success("Calculation completed successfully!", { id: toastId });
     } catch (error) {
@@ -173,6 +178,25 @@ export default function SIPCalculator() {
       color: "text-purple-600",
       isPercentage: true,
       icon: "⭐",
+    },
+    {
+      label: "Real Return (Inflation Adjusted)",
+      value: calculation?.realRate ?? 0,
+      color: "text-orange-600",
+      isPercentage: true,
+      icon: "📊",
+    },
+    {
+      label: "Inflation Adjusted Returns",
+      value: calculation?.inflationAdjustedReturns ?? 0,
+      color: "text-amber-600",
+      icon: "💹",
+    },
+    {
+      label: "Future Value in Today's Money",
+      value: calculation?.inflationAdjustedValue ?? 0,
+      color: "text-teal-600",
+      icon: "🏦",
     },
   ].map((result) => ({
     ...result,
@@ -272,6 +296,22 @@ export default function SIPCalculator() {
                 </div>
 
                 {smartSIPControls}
+
+                <div className="bg-gray-50 p-4 rounded-xl space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Inflation Rate</span>
+                    <div className="text-xs text-gray-500">(affects real returns)</div>
+                  </div>
+                  <InputField
+                    label="Expected Inflation"
+                    value={inflationRate}
+                    onChange={(value) => dispatch(setInflationRate(value))}
+                    suffix="%"
+                    min={0}
+                    max={100}
+                    placeholder="Enter expected inflation rate"
+                  />
+                </div>
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}

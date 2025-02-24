@@ -81,7 +81,7 @@ export const InvestmentGoals = ({
         });
       }
     });
-  }, [goals, expectedReturn]);
+  }, [goals, onUpdateGoal, expectedReturn]);
 
   const handleAddGoal = () => {
     if (!newGoal.name || !newGoal.targetAmount || !newGoal.targetYear) {
